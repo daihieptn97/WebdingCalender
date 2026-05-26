@@ -603,6 +603,59 @@
 			6: { ten: "Lục Hoang Ốc", tot: false }
 		};
 
+		var THIEN_CAN_HOP = [
+			["Giáp", "Kỷ"],
+			["Ất", "Canh"],
+			["Bính", "Tân"],
+			["Đinh", "Nhâm"],
+			["Mậu", "Quý"]
+		];
+
+		var CAN_HANH = {
+			"Giáp": "Mộc",
+			"Ất": "Mộc",
+			"Bính": "Hỏa",
+			"Đinh": "Hỏa",
+			"Mậu": "Thổ",
+			"Kỷ": "Thổ",
+			"Canh": "Kim",
+			"Tân": "Kim",
+			"Nhâm": "Thủy",
+			"Quý": "Thủy"
+		};
+
+		var DAI_PHONG_LOI_MAP = {
+			"Tý": { dai: [6, 12], phong: [1, 7] },
+			"Ngọ": { dai: [6, 12], phong: [1, 7] },
+			"Sửu": { dai: [5, 11], phong: [4, 10] },
+			"Mùi": { dai: [5, 11], phong: [4, 10] },
+			"Dần": { dai: [2, 8], phong: [3, 9] },
+			"Thân": { dai: [2, 8], phong: [3, 9] },
+			"Mão": { dai: [1, 7], phong: [6, 12] },
+			"Dậu": { dai: [1, 7], phong: [6, 12] },
+			"Thìn": { dai: [4, 10], phong: [5, 11] },
+			"Tuất": { dai: [4, 10], phong: [5, 11] },
+			"Tỵ": { dai: [3, 9], phong: [2, 8] },
+			"Hợi": { dai: [3, 9], phong: [2, 8] }
+		};
+
+		var SAT_CHU_THEO_THANG = {
+			1: "Tỵ", 2: "Tý", 3: "Mùi", 4: "Dần", 5: "Dậu", 6: "Thìn",
+			7: "Hợi", 8: "Ngọ", 9: "Sửu", 10: "Thân", 11: "Mão", 12: "Tuất"
+		};
+
+		var THO_TU_THEO_THANG = {
+			1: "Thìn", 2: "Tỵ", 3: "Ngọ", 4: "Mùi", 5: "Thân", 6: "Dậu",
+			7: "Tuất", 8: "Hợi", 9: "Tý", 10: "Sửu", 11: "Dần", 12: "Mão"
+		};
+
+		var VANG_VONG_THEO_THANG = {
+			1: "Dần", 2: "Mão", 3: "Thìn", 4: "Tỵ", 5: "Ngọ", 6: "Mùi",
+			7: "Thân", 8: "Dậu", 9: "Tuất", 10: "Hợi", 11: "Tý", 12: "Sửu"
+		};
+
+		var TAM_NUONG_DAYS = [3, 7, 13, 18, 22, 27];
+
 		/* ===== [PHAN 3] HAM PHONG THUY ===== */
 		function toDateParts(isoDate) {
 			var arr = isoDate.split("-").map(function (n) { return parseInt(n, 10); });
@@ -690,6 +743,84 @@
 				xungTrucDien: xungTrucDien,
 				lucHai: lucHai,
 				ketLuan: ketLuan,
+				diem: diem
+			};
+		}
+
+		function xetThienCan(canCoDau, canChuRe) {
+			var hop = isPairInList(canCoDau, canChuRe, THIEN_CAN_HOP);
+			var hanhCanCoDau = CAN_HANH[canCoDau];
+			var hanhCanChuRe = CAN_HANH[canChuRe];
+			var qhHanh = quanHeNguHanh(hanhCanCoDau, hanhCanChuRe);
+			var diem = 0;
+
+			if (hop) {
+				diem = 1;
+			} else if (qhHanh.type === "khac") {
+				diem = -1;
+			}
+
+			return {
+				hop: hop,
+				hanhCanCoDau: hanhCanCoDau,
+				hanhCanChuRe: hanhCanChuRe,
+				qhHanh: qhHanh,
+				diem: diem
+			};
+		}
+
+		function getCungPhi(year, isMale) {
+			var lastTwo = year % 100;
+			var qn = isMale ? ((100 - lastTwo) % 9) : ((lastTwo + 4) % 9);
+			if (qn === 0) qn = 9;
+
+			if (qn === 5) {
+				qn = isMale ? 2 : 8;
+			}
+
+			var map = {
+				1: "Khảm",
+				2: "Khôn",
+				3: "Chấn",
+				4: "Tốn",
+				6: "Càn",
+				7: "Đoài",
+				8: "Cấn",
+				9: "Ly"
+			};
+
+			return {
+				so: qn,
+				cung: map[qn]
+			};
+		}
+
+		function xetCungPhiVoChong(namCoDau, namChuRe) {
+			var cungVo = getCungPhi(namCoDau, false);
+			var cungChong = getCungPhi(namChuRe, true);
+			var dongTu = ["Khảm", "Ly", "Chấn", "Tốn"];
+			var tayTu = ["Càn", "Khôn", "Cấn", "Đoài"];
+			var cungTuongTac = "Họa Hại";
+			var diem = -2;
+
+			if (cungVo.cung === cungChong.cung) {
+				cungTuongTac = "Phục Vị";
+				diem = 2;
+			} else if (
+				(dongTu.indexOf(cungVo.cung) !== -1 && dongTu.indexOf(cungChong.cung) !== -1) ||
+				(tayTu.indexOf(cungVo.cung) !== -1 && tayTu.indexOf(cungChong.cung) !== -1)
+			) {
+				cungTuongTac = "Diên Niên";
+				diem = 2;
+			} else if (cungVo.so + cungChong.so === 10) {
+				cungTuongTac = "Tuyệt Mệnh";
+				diem = -2;
+			}
+
+			return {
+				cungVo: cungVo,
+				cungChong: cungChong,
+				cungTuongTac: cungTuongTac,
 				diem: diem
 			};
 		}
@@ -799,6 +930,259 @@
 			};
 		}
 
+		function xetThangCuoi(chiCoDau, thangAm) {
+			var cfg = DAI_PHONG_LOI_MAP[chiCoDau] || { dai: [], phong: [] };
+			var loai = "Thường";
+			var diem = -1;
+
+			if (cfg.dai.indexOf(thangAm) !== -1) {
+				loai = "Đại Lợi";
+				diem = 2;
+			} else if (cfg.phong.indexOf(thangAm) !== -1) {
+				loai = "Phòng Lợi";
+				diem = 1;
+			}
+
+			return {
+				thangAm: thangAm,
+				loai: loai,
+				daiLoi: cfg.dai,
+				phongLoi: cfg.phong,
+				diem: diem
+			};
+		}
+
+		function xetNgayXau(lunarDate) {
+			var chiNgay = CHI_VN[(lunarDate.jd + 1) % 12];
+			var nguyetKy = [5, 14, 23].indexOf(lunarDate.day) !== -1;
+			var satChu = SAT_CHU_THEO_THANG[lunarDate.month] === chiNgay;
+			var thoTu = THO_TU_THEO_THANG[lunarDate.month] === chiNgay;
+			var vangVong = VANG_VONG_THEO_THANG[lunarDate.month] === chiNgay;
+			var viPham = [];
+
+			if (nguyetKy) viPham.push("Nguyệt kỵ");
+			if (satChu) viPham.push("Sát chủ");
+			if (thoTu) viPham.push("Thọ tử");
+			if (vangVong) viPham.push("Vãng vong");
+
+			return {
+				chiNgay: chiNgay,
+				nguyetKy: nguyetKy,
+				satChu: satChu,
+				thoTu: thoTu,
+				vangVong: vangVong,
+				viPham: viPham,
+				diem: viPham.length ? -4 : 0
+			};
+		}
+
+		function getSexagenaryIndexFromCanChi(canIndex, chiIndex) {
+			for (var i = 0; i < 60; i++) {
+				if (i % 10 === canIndex && i % 12 === chiIndex) {
+					return i;
+				}
+			}
+			return 0;
+		}
+
+		function getNguHanhNgayByJd(jd) {
+			var canIndex = (jd + 9) % 10;
+			var chiIndex = (jd + 1) % 12;
+			var sexa = getSexagenaryIndexFromCanChi(canIndex, chiIndex);
+			var napAm = NAP_AM_60[sexa];
+			return {
+				can: CAN_VN[canIndex],
+				chi: CHI_VN[chiIndex],
+				napAm: napAm.ten,
+				hanh: napAm.hanh
+			};
+		}
+
+		function xetNguHanhNgayVoiMenh(dayHanh, personHanh) {
+			var sinh = {
+				"Kim": "Thủy",
+				"Thủy": "Mộc",
+				"Mộc": "Hỏa",
+				"Hỏa": "Thổ",
+				"Thổ": "Kim"
+			};
+			var khac = {
+				"Kim": "Mộc",
+				"Mộc": "Thổ",
+				"Thổ": "Thủy",
+				"Thủy": "Hỏa",
+				"Hỏa": "Kim"
+			};
+
+			if (dayHanh === personHanh) return "tuong_hoa";
+			if (sinh[dayHanh] === personHanh) return "tuong_sinh_nhap";
+			if (sinh[personHanh] === dayHanh) return "tuong_sinh_xuat";
+			if (khac[dayHanh] === personHanh) return "tuong_khac_nhap";
+			if (khac[personHanh] === dayHanh) return "tuong_khac_xuat";
+			return "trung_tinh";
+		}
+
+		function xetNgayDaiKyTheoThang(lunarDate) {
+			var chiNgay = CHI_VN[(lunarDate.jd + 1) % 12];
+			var viPham = [];
+			var delta = 0;
+
+			if (TAM_NUONG_DAYS.indexOf(lunarDate.day) !== -1) {
+				viPham.push("Tam Nương");
+				delta -= 40;
+			}
+			if ([5, 14, 23].indexOf(lunarDate.day) !== -1) {
+				viPham.push("Nguyệt Kỵ");
+				delta -= 40;
+			}
+			if (SAT_CHU_THEO_THANG[lunarDate.month] === chiNgay) {
+				viPham.push("Sát Chủ");
+				delta -= 25;
+			}
+			if (THO_TU_THEO_THANG[lunarDate.month] === chiNgay) {
+				viPham.push("Thọ Tử");
+				delta -= 25;
+			}
+
+			return {
+				chiNgay: chiNgay,
+				viPham: viPham,
+				delta: delta
+			};
+		}
+
+		function xetChiNgayVoiTuoi(chiNgay, chiCoDau, chiChuRe) {
+			var delta = 0;
+			var lyDo = [];
+
+			if (isPairInList(chiNgay, chiCoDau, LUC_HOP)) {
+				delta += 20;
+				lyDo.push("Lục hợp với tuổi cô dâu");
+			} else if (isXungTrucDien(chiNgay, chiCoDau)) {
+				delta -= 30;
+				lyDo.push("Chính xung với tuổi cô dâu");
+			} else if (isInSameGroup(chiNgay, chiCoDau, TAM_HOP)) {
+				delta += 12;
+				lyDo.push("Tam hợp với tuổi cô dâu");
+			} else if (isPairInList(chiNgay, chiCoDau, LUC_HAI)) {
+				delta -= 20;
+				lyDo.push("Lục hại với tuổi cô dâu");
+			}
+
+			if (isPairInList(chiNgay, chiChuRe, LUC_HOP)) {
+				delta += 5;
+				lyDo.push("Lục hợp bổ trợ với chú rể");
+			} else if (isXungTrucDien(chiNgay, chiChuRe)) {
+				delta -= 5;
+				lyDo.push("Xung với chú rể");
+			}
+
+			return {
+				delta: delta,
+				lyDo: lyDo
+			};
+		}
+
+		function danhGiaTheoThuatToan02(input) {
+			var score = 100;
+			var steps = {};
+
+			steps.buoc1 = {
+				ten: "Chuẩn hóa và chuyển đổi âm lịch",
+				delta: 0,
+				moTa: "Đã chuyển đổi 3 mốc ngày sang âm lịch và trích xuất Can Chi, ngũ hành."
+			};
+
+			steps.buoc2 = {
+				ten: "Kiểm tra Kim Lâu (cô dâu)",
+				delta: input.kimLau.pham ? -100 : 0,
+				moTa: input.kimLau.pham
+					? ("Phạm " + input.kimLau.loai + " ở tuổi mụ " + input.kimLau.tuoiMu + ". Theo pipeline, đây là bộ lọc quyết định.")
+					: ("Không phạm Kim Lâu (tuổi mụ " + input.kimLau.tuoiMu + "), tiếp tục các bước tiếp theo."),
+				blocked: input.kimLau.pham
+			};
+
+			if (input.kimLau.pham) {
+				return {
+					score: 0,
+					xepLoai: "NGÀY XẤU (HUNG)",
+					nhan: "bad",
+					steps: steps,
+					ketLuanNgan: "Phạm Kim Lâu nên không khuyến nghị chọn ngày này theo thuật toán 5 bước."
+				};
+			}
+
+			steps.buoc3 = {
+				ten: "Lọc ngày đại kỵ",
+				delta: input.ngayDaiKy.delta,
+				moTa: input.ngayDaiKy.viPham.length
+					? ("Phạm: " + input.ngayDaiKy.viPham.join(", ") + ".")
+					: "Không phạm Tam Nương, Nguyệt Kỵ, Sát Chủ, Thọ Tử."
+			};
+			score += input.ngayDaiKy.delta;
+
+			steps.buoc4 = {
+				ten: "Xét hợp/xung Địa chi ngày cưới",
+				delta: input.chiNgayVsTuoi.delta,
+				moTa: input.chiNgayVsTuoi.lyDo.length
+					? input.chiNgayVsTuoi.lyDo.join("; ")
+					: "Không có hợp/xung nổi bật với tuổi cô dâu/chú rể."
+			};
+			score += input.chiNgayVsTuoi.delta;
+
+			var deltaNguHanh = 0;
+			var lyDoNguHanh = [];
+			if (input.nguHanhNgayVsCoDau === "tuong_hoa" || input.nguHanhNgayVsCoDau === "tuong_sinh_nhap" || input.nguHanhNgayVsCoDau === "tuong_sinh_xuat") {
+				deltaNguHanh += 15;
+				lyDoNguHanh.push("Ngũ hành ngày cưới hài hòa/tương sinh với cô dâu");
+			} else if (input.nguHanhNgayVsCoDau === "tuong_khac_nhap") {
+				deltaNguHanh -= 25;
+				lyDoNguHanh.push("Ngũ hành ngày cưới khắc nhập cô dâu");
+			} else if (input.nguHanhNgayVsCoDau === "tuong_khac_xuat") {
+				deltaNguHanh -= 15;
+				lyDoNguHanh.push("Ngũ hành cô dâu khắc xuất ngày cưới");
+			}
+
+			if (input.nguHanhNgayVsChuRe === "tuong_hoa" || input.nguHanhNgayVsChuRe === "tuong_sinh_nhap") {
+				deltaNguHanh += 5;
+				lyDoNguHanh.push("Ngũ hành ngày cưới hỗ trợ chú rể");
+			} else if (input.nguHanhNgayVsChuRe === "tuong_khac_nhap") {
+				deltaNguHanh -= 5;
+				lyDoNguHanh.push("Ngũ hành ngày cưới khắc chú rể");
+			}
+
+			steps.buoc5 = {
+				ten: "Xét tương sinh Ngũ hành",
+				delta: deltaNguHanh,
+				moTa: lyDoNguHanh.length ? lyDoNguHanh.join("; ") : "Quan hệ ngũ hành trung tính."
+			};
+			score += deltaNguHanh;
+
+			if (score > 100) score = 100;
+			if (score < 0) score = 0;
+
+			var xepLoai;
+			var nhan;
+			if (score >= 80) {
+				xepLoai = "NGÀY ĐẸP (CÁT TƯỜNG)";
+				nhan = "ok";
+			} else if (score >= 50) {
+				xepLoai = "NGÀY BÌNH THƯỜNG";
+				nhan = "warn";
+			} else {
+				xepLoai = "NGÀY XẤU (HUNG)";
+				nhan = "bad";
+			}
+
+			return {
+				score: score,
+				xepLoai: xepLoai,
+				nhan: nhan,
+				steps: steps,
+				ketLuanNgan: "Đã đánh giá theo pipeline 5 bước: Kim Lâu -> Đại kỵ -> Chi -> Ngũ hành."
+			};
+		}
+
 		function normalizeChi(raw) {
 			var map = {
 				"Ty": "Tý",
@@ -882,13 +1266,13 @@
 			}
 			var xepLoai;
 			var nhan;
-			if (tong >= 7) {
+			if (tong >= 10) {
 				xepLoai = "Đại cát";
 				nhan = "ok";
-			} else if (tong >= 4) {
+			} else if (tong >= 6) {
 				xepLoai = "Cát";
 				nhan = "ok";
-			} else if (tong >= 1) {
+			} else if (tong >= 2) {
 				xepLoai = "Trung bình";
 				nhan = "warn";
 			} else {
@@ -964,21 +1348,22 @@
 			html += "<section class=\"card\">";
 			html += "<div class=\"grade\">";
 			html += "<h2>" + safeText(diem.xepLoai) + "</h2>";
-			html += "<div class=\"point-line\">Tổng điểm: " + diem.tong + "</div>";
+			html += "<div class=\"point-line\">Tổng điểm: " + diem.tong + "/100</div>";
 			html += "<span class=\"tag " + diem.nhan + "\">" + safeText(info.nhanXet) + "</span>";
 			html += "<div class=\"note\">Ngày cưới dự kiến: " + safeText(info.ngayCuoiDuong) + " | Âm lịch: " + safeText(info.ngayCuoiAm) + "</div>";
 			html += "</div>";
 
 			html += "<details open><summary>Giải thích cộng/trừ điểm</summary>";
 			html += "<div class=\"detail-body\">";
-			html += "<table class=\"score-breakdown\"><thead><tr><th>Tiêu chí</th><th>Lý do</th><th>Điểm</th></tr></thead><tbody>";
-			html += "<tr><td>Tuổi vợ chồng</td><td>" + safeText(info.lyDoDiem.tuoi) + "</td><td>" + formatScoreNumber(info.tuoi.diem) + "</td></tr>";
-			html += "<tr><td>Cung mệnh</td><td>" + safeText(info.lyDoDiem.menh) + "</td><td>" + formatScoreNumber(info.menh.diem) + "</td></tr>";
-			html += "<tr><td>Kim Lâu</td><td>" + safeText(info.lyDoDiem.kimLau) + "</td><td>" + formatScoreNumber(info.kimLau.diem) + "</td></tr>";
-			html += "<tr><td>Hoang Ốc</td><td>" + safeText(info.lyDoDiem.hoangOc) + "</td><td>" + formatScoreNumber(info.hoangOc.diem) + "</td></tr>";
-			html += "<tr><td>Tam Tai</td><td>" + safeText(info.lyDoDiem.tamTai) + "</td><td>" + formatScoreNumber(info.tamTai.diem) + "</td></tr>";
-			html += "<tr><td>Ngày Hoàng Đạo</td><td>" + safeText(info.lyDoDiem.ngayHD) + "</td><td>" + formatScoreNumber(info.ngayHD.diem) + "</td></tr>";
-			html += "<tr><td><strong>Tổng</strong></td><td><strong>" + safeText(info.lyDoDiem.tong) + "</strong></td><td><strong>" + formatScoreNumber(diem.tong) + "</strong></td></tr>";
+			html += "<table class=\"score-breakdown\"><thead><tr><th>Bước</th><th>Nội dung</th><th>Điểm</th></tr></thead><tbody>";
+			html += "<tr><td>Bước 1</td><td>" + safeText(info.alg02.steps.buoc1.moTa) + "</td><td>" + formatScoreNumber(info.alg02.steps.buoc1.delta) + "</td></tr>";
+			html += "<tr><td>Bước 2</td><td>" + safeText(info.alg02.steps.buoc2.moTa) + "</td><td>" + formatScoreNumber(info.alg02.steps.buoc2.delta) + "</td></tr>";
+			if (!info.alg02.steps.buoc2.blocked) {
+				html += "<tr><td>Bước 3</td><td>" + safeText(info.alg02.steps.buoc3.moTa) + "</td><td>" + formatScoreNumber(info.alg02.steps.buoc3.delta) + "</td></tr>";
+				html += "<tr><td>Bước 4</td><td>" + safeText(info.alg02.steps.buoc4.moTa) + "</td><td>" + formatScoreNumber(info.alg02.steps.buoc4.delta) + "</td></tr>";
+				html += "<tr><td>Bước 5</td><td>" + safeText(info.alg02.steps.buoc5.moTa) + "</td><td>" + formatScoreNumber(info.alg02.steps.buoc5.delta) + "</td></tr>";
+			}
+			html += "<tr><td><strong>Kết luận</strong></td><td><strong>" + safeText(info.alg02.ketLuanNgan) + "</strong></td><td><strong>" + formatScoreNumber(diem.tong) + "/100</strong></td></tr>";
 			html += "</tbody></table>";
 			html += "</div></details>";
 
@@ -987,35 +1372,6 @@
 			html += "Cô dâu: " + info.coDauDuong + " (" + info.coDauThu + ") | Âm: " + info.coDauAm + "\n";
 			html += "Chú rể: " + info.chuReDuong + " (" + info.chuReThu + ") | Âm: " + info.chuReAm + "\n";
 			html += "Ngày cưới: " + info.ngayCuoiDuong + " (" + info.ngayCuoiThu + ") | Âm: " + info.ngayCuoiAm;
-			html += "</div></details>";
-
-			html += "<details open><summary>1) Tuổi vợ chồng (Tam/Lục Hợp, Xung/Hại) - " + pointTag(info.tuoi.diem) + "</summary>";
-			html += "<div class=\"detail-body\">";
-			html += "Cô dâu: " + info.chiCoDau + " | Chú rể: " + info.chiChuRe + "\n";
-			html += "Kết luận: " + info.tuoi.ketLuan + "\n";
-			html += "Tam hợp: " + (info.tuoi.tamHop ? "Có" : "Không") + " | Lục hợp: " + (info.tuoi.lucHop ? "Có" : "Không") + "\n";
-			html += "Tứ hành xung: " + (info.tuoi.tuHanhXung ? "Có" : "Không") + " | Lục hại: " + (info.tuoi.lucHai ? "Có" : "Không");
-			html += "</div></details>";
-
-			html += "<details><summary>2) Cung mệnh ngũ hành - " + pointTag(info.menh.diem) + "</summary>";
-			html += "<div class=\"detail-body\">";
-			html += "Cô dâu: " + info.menhCoDauText + "\n";
-			html += "Chú rể: " + info.menhChuReText + "\n";
-			html += "Quan hệ: " + info.menh.quanHe.moTa;
-			html += "</div></details>";
-
-			html += "<details><summary>3) Năm cưới (Kim Lâu, Hoang Ốc, Tam Tai) - " + pointTag(info.namCuoiTongDiem) + "</summary>";
-			html += "<div class=\"detail-body\">";
-			html += "Kim Lâu: " + info.kimLau.loai + " (tuổi mụ " + info.kimLau.tuoiMu + ")\n";
-			html += "Hoang Ốc: " + info.hoangOc.cung + " - " + (info.hoangOc.tot ? "Cát" : "Hung") + "\n";
-			html += "Tam Tai: " + (info.tamTai.pham ? "Phạm" : "Không phạm") + " (năm " + info.chiNamCuoi + ")";
-			html += "</div></details>";
-
-			html += "<details><summary>4) Ngày Hoàng Đạo/Hắc Đạo - " + pointTag(info.ngayHD.diem) + "</summary>";
-			html += "<div class=\"detail-body\">";
-			html += "Chi ngày cưới: " + info.ngayHD.chiNgay + " | Tháng âm: " + info.ngayHD.thangAm + "\n";
-			html += "Kết luận: " + (info.ngayHD.laHoangDao ? "Hoàng đạo" : "Hắc đạo") + "\n";
-			html += "Chi hoàng đạo tham chiếu tháng này: " + info.ngayHD.danhSachHoangDao.join(", ");
 			html += "</div></details>";
 
 			html += "<details open><summary>5) Giờ hoàng đạo trong ngày cưới</summary>";
@@ -1067,61 +1423,45 @@
 			var chiCoDau = getChiNameFromYear(lunarBride.year);
 			var chiChuRe = getChiNameFromYear(lunarGroom.year);
 			var chiNamCuoi = getChiNameFromYear(lunarWedding.year);
+			var canCoDau = getCanNameFromYear(lunarBride.year);
+			var canChuRe = getCanNameFromYear(lunarGroom.year);
 
 			var tuoi = xetTuoiVoChong(chiCoDau, chiChuRe);
+			var thienCan = xetThienCan(canCoDau, canChuRe);
 			var menh = xetCungMenh(lunarBride.year, lunarGroom.year);
-			var kimLau = xetKimLau(bride.y, wedding.y);
+			var cungPhi = xetCungPhiVoChong(lunarBride.year, lunarGroom.year);
+			var kimLau = xetKimLau(lunarBride.year, lunarWedding.year);
 			var hoangOc = xetHoangOc(bride.y, wedding.y);
 			var tamTai = xetTamTai(chiCoDau, chiNamCuoi);
+			var thangCuoi = xetThangCuoi(chiCoDau, lunarWedding.month);
 			var ngayHD = xetNgayHoangDao(lunarWedding);
+			var ngayXau = xetNgayXau(lunarWedding);
 
 			var chiNgayCuoi = CHI_VN[(lunarWedding.jd + 1) % 12];
 			var gioHD = xetGioHoangDao(lunarWedding.jd, chiNgayCuoi, chiCoDau);
 
 			var tongNamCuoi = kimLau.diem + hoangOc.diem + tamTai.diem;
-			var tong = chamDiemTongHop([
-				tuoi.diem,
-				menh.diem,
-				kimLau.diem,
-				hoangOc.diem,
-				tamTai.diem,
-				ngayHD.diem
-			]);
+			var ngayDaiKy = xetNgayDaiKyTheoThang(lunarWedding);
+			var chiNgayVsTuoi = xetChiNgayVoiTuoi(chiNgayCuoi, chiCoDau, chiChuRe);
+			var nguHanhNgay = getNguHanhNgayByJd(lunarWedding.jd);
+			var nguHanhNgayVsCoDau = xetNguHanhNgayVoiMenh(nguHanhNgay.hanh, menh.menhCoDau.hanh);
+			var nguHanhNgayVsChuRe = xetNguHanhNgayVoiMenh(nguHanhNgay.hanh, menh.menhChuRe.hanh);
 
-			var nhanXet = "Nên cân nhắc thêm các yếu tố gia đình và nghi lễ thực tế.";
-			if (tong.xepLoai === "Đại cát") {
-				nhanXet = "Ngày cưới rất sáng, các chỉ dấu dân gian nghiêng về cát lợi.";
-			} else if (tong.xepLoai === "Cát") {
-				nhanXet = "Ngày cưới khá tốt, có thể tiến hành với sự chuẩn bị chu đáo.";
-			} else if (tong.xepLoai === "Trung bình") {
-				nhanXet = "Ngày ở mức trung tính, có thể cân nhắc chọn ngày tốt hơn.";
-			}
+			var alg02 = danhGiaTheoThuatToan02({
+				kimLau: kimLau,
+				ngayDaiKy: ngayDaiKy,
+				chiNgayVsTuoi: chiNgayVsTuoi,
+				nguHanhNgayVsCoDau: nguHanhNgayVsCoDau,
+				nguHanhNgayVsChuRe: nguHanhNgayVsChuRe
+			});
 
-			var lyDoDiem = {
-				tuoi: tuoi.diem > 0
-					? "Hai tuổi có quan hệ hợp (Tam hợp/Lục hợp), nên được cộng điểm."
-					: (tuoi.diem < 0
-						? "Hai tuổi rơi vào nhóm xung/hại (Tứ hành xung, xung trực diện hoặc Lục hại), nên bị trừ điểm."
-						: "Hai tuổi không thuộc nhóm hợp mạnh hay xung/hại rõ rệt, nên 0 điểm."),
-				menh: menh.diem > 1
-					? "Ngũ hành nạp âm tương sinh, nên +2 điểm."
-					: (menh.diem === 1
-						? "Ngũ hành nạp âm tương hòa, nên +1 điểm."
-						: "Ngũ hành nạp âm tương khắc, nên -2 điểm."),
-				kimLau: kimLau.pham
-					? "Tuổi mụ cô dâu phạm " + kimLau.loai + ", nên -3 điểm."
-					: "Tuổi mụ cô dâu không phạm Kim Lâu, nên 0 điểm.",
-				hoangOc: hoangOc.tot
-					? "Rơi vào cung " + hoangOc.cung + " (cát), nên +1 điểm."
-					: "Rơi vào cung " + hoangOc.cung + " (hung), nên -2 điểm.",
-				tamTai: tamTai.pham
-					? "Năm cưới thuộc năm Tam Tai của tuổi cô dâu, nên -3 điểm."
-					: "Năm cưới không phạm Tam Tai của tuổi cô dâu, nên 0 điểm.",
-				ngayHD: ngayHD.laHoangDao
-					? "Ngày cưới là ngày Hoàng đạo theo tháng âm, nên +2 điểm."
-					: "Ngày cưới là ngày Hắc đạo theo tháng âm, nên -2 điểm.",
-				tong: "Cộng tất cả tiêu chí theo thang điểm đã cấu hình để ra kết quả " + tong.xepLoai + "."
+			var tong = {
+				tong: alg02.score,
+				xepLoai: alg02.xepLoai,
+				nhan: alg02.nhan
 			};
+
+			var nhanXet = alg02.ketLuanNgan;
 
 			renderResult({
 				diem: tong,
@@ -1140,17 +1480,26 @@
 					chiCoDau: chiCoDau,
 					chiChuRe: chiChuRe,
 					chiNamCuoi: chiNamCuoi,
+					canCoDau: canCoDau,
+					canChuRe: canChuRe,
 					tuoi: tuoi,
+					thienCan: thienCan,
 					menh: menh,
+					cungPhi: cungPhi,
 					menhCoDauText: getCanNameFromYear(lunarBride.year) + " " + chiCoDau + " - " + menh.menhCoDau.napAm + " (" + menh.menhCoDau.hanh + ")",
 					menhChuReText: getCanNameFromYear(lunarGroom.year) + " " + chiChuRe + " - " + menh.menhChuRe.napAm + " (" + menh.menhChuRe.hanh + ")",
 					kimLau: kimLau,
 					hoangOc: hoangOc,
 					tamTai: tamTai,
+					thangCuoi: thangCuoi,
 					ngayHD: ngayHD,
+					ngayXau: ngayXau,
 					gioHD: gioHD,
-					namCuoiTongDiem: tongNamCuoi,
-					lyDoDiem: lyDoDiem
+					alg02: alg02,
+					ngayDaiKy: ngayDaiKy,
+					chiNgayVsTuoi: chiNgayVsTuoi,
+					nguHanhNgay: nguHanhNgay,
+					namCuoiTongDiem: tongNamCuoi
 				}
 			});
 		});
